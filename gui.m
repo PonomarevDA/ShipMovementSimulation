@@ -22,7 +22,7 @@ function varargout = gui(varargin)
 
 % Edit the above text to modify the response to help gui
 
-% Last Modified by GUIDE v2.5 25-Mar-2019 20:55:25
+% Last Modified by GUIDE v2.5 26-Mar-2019 13:09:29
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -110,12 +110,18 @@ switch choice
         setModelInfoInGui(handles, Model)
         setAllInitialDataOff(handles);
     case 5
-        disp('Test model')
-        Model = createModelTest();
+        disp('Test model - surface ship')
+        Model = createModelForSurfaceShipTest();
         disp(Model)
         setModelInfoInGui(handles, Model)
         setAllInitialDataOff(handles);
-    case 6
+	case 6
+        disp('Test model - submarine ship')
+        Model = createModelForSubmarineShipTest();
+        disp(Model)
+        setModelInfoInGui(handles, Model)
+        setAllInitialDataOff(handles);
+    case 7
         disp('Individual model')
         setAllInitialDataOn(handles);
     otherwise
@@ -431,7 +437,17 @@ function pushbuttonStartSimulation_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global Model
 if updateAllErrorMarks(handles) == false
-    [t, x, p, v] = solveDifferenceModel(Model);
+    switch get(handles.popupmenuType, "Value")
+        case 2
+            [t, x, p, v] = solveDifferenceModelForSurfaceTransport(Model);
+        case 3
+            [t, x, p, v] = solveDifferenceModelForSurfaceTransport(Model);
+        case 4
+            [t, x, p, v] = solveDifferenceModelForSubmarineTransport(Model);
+        otherwise
+            t = 0; x = 0; p = 0; v = 0;
+    end
+    
     [x, p, v] = normalize(x, p, v);
 
     plot(t, x, 'b', ...
@@ -449,7 +465,7 @@ function popupmenuType_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns popupmenuType contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from popupmenuType
-if get(handles.popupmenuChoice, 'Value') == 6
+if get(handles.popupmenuChoice, 'Value') == 7
     if get(handles.popupmenuType, 'Value') == 4
         setAllInitialDataOn(handles)
         set(handles.editSpeed,   'Enable', "Off");
@@ -472,6 +488,143 @@ function popupmenuType_CreateFcn(hObject, eventdata, handles)
 % handles    empty - handles not created until after all CreateFcns called
 
 % Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in popupmenuIntegrationMethod.
+function popupmenuIntegrationMethod_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenuIntegrationMethod (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenuIntegrationMethod contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenuIntegrationMethod
+
+
+% --- Executes during object creation, after setting all properties.
+function popupmenuIntegrationMethod_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenuIntegrationMethod (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function editInitialValueV0_Callback(hObject, eventdata, handles)
+% hObject    handle to editInitialValueV0 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editInitialValueV0 as text
+%        str2double(get(hObject,'String')) returns contents of editInitialValueV0 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editInitialValueV0_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editInitialValueV0 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function editInitialValueX0_Callback(hObject, eventdata, handles)
+% hObject    handle to editInitialValueX0 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editInitialValueX0 as text
+%        str2double(get(hObject,'String')) returns contents of editInitialValueX0 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editInitialValueX0_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editInitialValueX0 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on slider movement.
+function slider1_Callback(hObject, eventdata, handles)
+% hObject    handle to slider1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+
+% --- Executes during object creation, after setting all properties.
+function slider1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slider1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+
+
+function editOde45TimeStart_Callback(hObject, eventdata, handles)
+% hObject    handle to editOde45TimeStart (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editOde45TimeStart as text
+%        str2double(get(hObject,'String')) returns contents of editOde45TimeStart as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editOde45TimeStart_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editOde45TimeStart (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function editOde45TimeEnd_Callback(hObject, eventdata, handles)
+% hObject    handle to editOde45TimeEnd (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editOde45TimeEnd as text
+%        str2double(get(hObject,'String')) returns contents of editOde45TimeEnd as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editOde45TimeEnd_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editOde45TimeEnd (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');

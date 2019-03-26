@@ -1,4 +1,4 @@
-function [t, x, P, v] = solveDifferenceModel(model)
+function [t, x, P, v] = solveDifferenceModelForSurfaceTransport(model)
 
 % Constants for translation to SI
 KNOT_TO_METER_PER_SEC = 0.51;
