@@ -61,6 +61,12 @@ guidata(hObject, handles);
 % UIWAIT makes gui wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
+% Init global variables
+global InitialValueX0 InitialValueV0 t_0 t_end
+InitialValueX0 = 0; 
+InitialValueV0 = 0; 
+t_0 = 0; 
+t_end = 100;
 
 % --- Outputs from this function are returned to the command line.
 function varargout = gui_OutputFcn(hObject, eventdata, handles) 
@@ -437,13 +443,27 @@ function pushbuttonStartSimulation_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global Model
 if updateAllErrorMarks(handles) == false
-    switch get(handles.popupmenuType, "Value")
+    modelType = get(handles.popupmenuType, "Value");
+    integrationMethod = get(handles.popupmenuIntegrationMethod, "Value");
+    switch modelType
         case 2
-            [t, x, p, v] = solveDifferenceModelForSurfaceTransport(Model);
+            if integrationMethod == 1
+                [t, x, p, v] = solveContinuousModelForSurfaceTransport(Model);
+            else
+                [t, x, p, v] = solveDifferenceModelForSurfaceTransport(Model);
+            end
         case 3
-            [t, x, p, v] = solveDifferenceModelForSurfaceTransport(Model);
+             if integrationMethod == 1
+                [t, x, p, v] = solveContinuousModelForSurfaceTransport(Model);
+            else
+                [t, x, p, v] = solveDifferenceModelForSurfaceTransport(Model);
+            end
         case 4
-            [t, x, p, v] = solveDifferenceModelForSubmarineTransport(Model);
+            if integrationMethod == 1
+                [t, x, p, v] = solveContinuousModelForSubmarineTransport(Model);
+            else
+                [t, x, p, v] = solveDifferenceModelForSubmarineTransport(Model);
+            end
         otherwise
             t = 0; x = 0; p = 0; v = 0;
     end
@@ -525,6 +545,14 @@ function editInitialValueV0_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of editInitialValueV0 as text
 %        str2double(get(hObject,'String')) returns contents of editInitialValueV0 as a double
+global InitialValueV0
+value = str2double(get(hObject, "String"));
+if isnan(value)
+    InitialValueV0 = 0;
+    set(hObject, "String", 0);
+else
+    InitialValueV0 = value;
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -548,7 +576,14 @@ function editInitialValueX0_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of editInitialValueX0 as text
 %        str2double(get(hObject,'String')) returns contents of editInitialValueX0 as a double
-
+global InitialValueX0
+value = str2double(get(hObject, "String"));
+if isnan(value)
+    InitialValueX0 = 0;
+    set(hObject, "String", 0);
+else
+    InitialValueX0 = value;
+end
 
 % --- Executes during object creation, after setting all properties.
 function editInitialValueX0_CreateFcn(hObject, eventdata, handles)
@@ -593,6 +628,19 @@ function editOde45TimeStart_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of editOde45TimeStart as text
 %        str2double(get(hObject,'String')) returns contents of editOde45TimeStart as a double
+global t_0 t_end
+value = str2double(get(hObject, "String"));
+if isnan(value)
+    t_0 = t_end - 1;
+    set(hObject, "String", t_0);
+else
+    if value >= t_end
+        t_0 = t_end - 1;
+        set(hObject, "String", t_0);
+    else
+        t_0 = value;
+    end
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -616,6 +664,19 @@ function editOde45TimeEnd_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of editOde45TimeEnd as text
 %        str2double(get(hObject,'String')) returns contents of editOde45TimeEnd as a double
+global t_0 t_end
+value = str2double(get(hObject, "String"));
+if isnan(value)
+    t_end = t_0 + 1;
+    set(hObject, "String", t_end);
+else
+    if value <= t_0
+        t_end = t_0 + 1;
+        set(hObject, "String", t_end);
+    else
+        t_end = value;
+    end
+end
 
 
 % --- Executes during object creation, after setting all properties.
