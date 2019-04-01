@@ -19,6 +19,8 @@ else
     deltaF = F * 0.2;
 end
 m = model.W * TON_TO_KILOGRAM;
+A1 = F / (V1^2);
+A2 = F / (V2^2);
 
 % Init parameters
 deltaTime = 0.01;
@@ -37,9 +39,11 @@ while t(index) <= t_end
     end
     deltaXi = x(index) - x(index - 1);
     if v(index) < Vk
-        A = F / (V1^2);
+        A = A1;
+    elseif v(index) >= V1
+        A = A2;
     else
-        A = F / (V2^2);
+        A = A1 - (v(index) - Vk)*(A1 - A2)/(V1 - Vk);
     end
     x(index + 1) = x(index) + deltaXi + (p(index) * F * deltaTime^2/100 - A * deltaXi * abs(deltaXi)) / m;
     v(index + 1) = (x(index + 1) - x(index)) / deltaTime;

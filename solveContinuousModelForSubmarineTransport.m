@@ -19,10 +19,12 @@ else
     deltaF = F * 0.2;
 end
 m = model.W * TON_TO_KILOGRAM;
+A1 = F/(V1^2);
+A2 = F/(V2^2);
 
 % Create continuous system model
 timeWhenPWillBeMax = F / deltaF;
-A = @(v) F/(V1^2)*(v <= Vk) + F/(V2^2)*(v > Vk);
+A = @(v) A1*(v <= Vk) + A2*(v >= V1) + (A1 - (v - Vk)*(A1 - A2)/(V1 - Vk))*((v > Vk) && (v < V1));
 P = @(t) 100 + (t < timeWhenPWillBeMax).*(t.*100./timeWhenPWillBeMax - 100);
 F = @(t) P(t)*F/100;
 dx_dt = @(t, s) s(2);
