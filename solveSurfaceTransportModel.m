@@ -13,6 +13,7 @@ function [t, x, p, v] = solveSurfaceTransportModel(model, ...
     x0, v0, t_0, t_end, simulationType, integrationMethod)
 
 global RelativeThrust
+RelativeThrust
 
 % Enums
 SIMULATION_TYPE_ACCELERATION = 1;
@@ -35,8 +36,8 @@ if model.W < 10000
 else
     deltaF = F * 0.2;
 end
-if RelativeThrust < deltaF
-    deltaF = RelativeThrust;
+if RelativeThrust < deltaF / F * 100
+    deltaF = F * RelativeThrust / 100;
 end
 M = model.W * TON_TO_KILOGRAM;
 
