@@ -1,3 +1,8 @@
+%======================================================================
+%> @brief Set model info in GUI
+%> @param handles - structure with handles to object
+%> @param model - structure with model parameters
+%======================================================================
 function setModelInfoInGui(handles, model)
 switch model.Type
     case "Surface ship"

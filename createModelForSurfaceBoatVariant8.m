@@ -1,3 +1,6 @@
+%======================================================================
+%> @brief Create model for surface boat variant8
+%======================================================================
 function model = createModelForSurfaceBoatVariant8()
 model.Type = "Surface boat";
 model.Variant = 8;

@@ -1,3 +1,7 @@
+%======================================================================
+%> @brief Set all initial data on
+%> @param handles - structure with handles and user data
+%======================================================================
 function setAllInitialDataOn(handles)
 set(handles.popupmenuType,      'Enable', "On");
 set(handles.editVariant,        'Enable', "On");

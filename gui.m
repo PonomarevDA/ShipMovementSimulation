@@ -62,7 +62,7 @@ guidata(hObject, handles);
 % uiwait(handles.figure1);
 
 % Init global variables
-global InitialValueX0 InitialValueV0 t_0 t_end
+global InitialValueX0 InitialValueV0 t_0 t_end RelativeThrust
 InitialValueX0 = 0; 
 InitialValueV0 = 0; 
 t_0 = 0; 

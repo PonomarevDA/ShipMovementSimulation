@@ -1,3 +1,9 @@
+%======================================================================
+%> @brief Updata all errors marks
+%> @param handles - structure with handles to object
+%> @note If object is active and have error string value, set his background
+% to "Red", else set background to "white"
+%======================================================================
 function isThereAnError = updateAllErrorMarks(handles)
 isThereAnError = false;
 

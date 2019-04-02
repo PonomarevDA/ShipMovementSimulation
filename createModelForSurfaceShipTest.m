@@ -1,3 +1,6 @@
+%======================================================================
+%> @brief Create model for surface ship test
+%======================================================================
 function model = createModelForSurfaceShipTest()
 model.Type = "Surface ship";
 model.Variant = 0;

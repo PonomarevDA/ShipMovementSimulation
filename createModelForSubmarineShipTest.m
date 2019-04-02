@@ -1,4 +1,7 @@
-function model = createModelForSurfaceShipTest()
+%======================================================================
+%> @brief Create model for surface ship test
+%======================================================================
+function model = createModelForSubmarineShipTest()
 model.Type = "Submarine ship";
 model.Variant = 0;
 model.Group = "No group";
@@ -17,12 +20,11 @@ HORSEPOWER_TO_WATT = 735.5;
 TON_TO_KILOGRAM = 1000;
 
 % ReStandart:
-N = F*Vk;
+N = F*Vk;                               % 
 model.W = M / TON_TO_KILOGRAM;          % displacement, ton
 model.Vk = Vk / KNOT_TO_METER_PER_SEC;  % speed, knots
 model.V1 = V1 / KNOT_TO_METER_PER_SEC;  % speed, knots
 model.V2 = V2 / KNOT_TO_METER_PER_SEC;  % speed, knots
 model.N = N / HORSEPOWER_TO_WATT;       % power, horsepower
-
 end
 

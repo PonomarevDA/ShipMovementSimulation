@@ -1,3 +1,6 @@
+%======================================================================
+%> @brief Create model for submarine ship variant27
+%======================================================================
 function model = createModelForSubmarineShipVariant27()
 model.Type = "Submarine ship";
 model.Variant = 27;

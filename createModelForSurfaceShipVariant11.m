@@ -1,3 +1,6 @@
+%======================================================================
+%> @brief Create model for surface ship variant11
+%======================================================================
 function model = createModelForSurfaceShipVariant11()
 model.Type = "Surface ship";
 model.Variant = 11;
