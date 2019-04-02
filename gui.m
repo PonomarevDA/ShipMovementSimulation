@@ -22,7 +22,7 @@ function varargout = gui(varargin)
 
 % Edit the above text to modify the response to help gui
 
-% Last Modified by GUIDE v2.5 30-Mar-2019 00:21:11
+% Last Modified by GUIDE v2.5 02-Apr-2019 15:52:48
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -467,13 +467,41 @@ if updateAllErrorMarks(handles) == false
         otherwise
             t = 0; x = 0; p = 0; v = 0;
     end
-    
-    [x, p, v] = normalize(x, p, v);
 
-    plot(t, x, 'b', ...
-         t, p, 'r', ...
+    % Create graph
+    yyaxis left
+    plot(t, x, 'b')
+    ylabel('Distance x, meters')
+    yyaxis right
+    plot(t, p, 'r', ...
          t, v, 'g')
+    ylabel('Traction force, %, Speed, meters/sec')
     grid on;
+    title('Blue - distance, red - traction force, green - speed')
+    
+    % Calculate parameters
+    global SimulationType
+    % The criterion for achieving the maximum speed - 1%
+    % 1. Acceleration (any ship)
+    if SimulationType == 1
+        outputParameters = calculateAccelerationParameters(t, x, v);
+        
+        set(handles.editAccelerationMaximumSpeed, "String", outputParameters.MaxSpeed)
+        set(handles.editAccelerationTime, "String", outputParameters.MaxSpeedTime)
+        set(handles.editAccelerationDistance, "String", outputParameters.Distance)
+        
+        set(handles.editAccelerationTimeDisplacementMode, "String", outputParameters.TimeDisplacementMode)
+        set(handles.editAccelerationDistanceDisplacementMode, "String", outputParameters.DistanceDisplacementMode)
+        
+        set(handles.editAccelerationTimeGlindingMode, "String", outputParameters.TimeGlindingMode)
+        set(handles.editAccelerationDistanceGlindingMode, "String", outputParameters.DistanceGlindingMode)
+        
+        set(handles.editAccelerationTimeOnTheWings, "String", outputParameters.TimeOnTheWings)
+        set(handles.editAccelerationDistanceOnTheWings, "String", outputParameters.DistanceOnTheWings)
+
+    % 2. Braking
+    % 3. Both Acceleration + braking
+    end
 end
 
 
@@ -599,8 +627,8 @@ end
 
 
 % --- Executes on slider movement.
-function slider1_Callback(hObject, eventdata, handles)
-% hObject    handle to slider1 (see GCBO)
+function sliderRelativeThrust_Callback(hObject, eventdata, handles)
+% hObject    handle to sliderRelativeThrust (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
@@ -609,8 +637,8 @@ function slider1_Callback(hObject, eventdata, handles)
 
 
 % --- Executes during object creation, after setting all properties.
-function slider1_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to slider1 (see GCBO)
+function sliderRelativeThrust_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to sliderRelativeThrust (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -693,18 +721,18 @@ end
 
 
 
-function edit19_Callback(hObject, eventdata, handles)
-% hObject    handle to edit19 (see GCBO)
+function editAccelerationDistance_Callback(hObject, eventdata, handles)
+% hObject    handle to editAccelerationDistance (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit19 as text
-%        str2double(get(hObject,'String')) returns contents of edit19 as a double
+% Hints: get(hObject,'String') returns contents of editAccelerationDistance as text
+%        str2double(get(hObject,'String')) returns contents of editAccelerationDistance as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit19_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit19 (see GCBO)
+function editAccelerationDistance_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editAccelerationDistance (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -716,18 +744,18 @@ end
 
 
 
-function edit18_Callback(hObject, eventdata, handles)
-% hObject    handle to edit18 (see GCBO)
+function editAccelerationMaximumSpeed_Callback(hObject, eventdata, handles)
+% hObject    handle to editAccelerationMaximumSpeed (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit18 as text
-%        str2double(get(hObject,'String')) returns contents of edit18 as a double
+% Hints: get(hObject,'String') returns contents of editAccelerationMaximumSpeed as text
+%        str2double(get(hObject,'String')) returns contents of editAccelerationMaximumSpeed as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit18_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit18 (see GCBO)
+function editAccelerationMaximumSpeed_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editAccelerationMaximumSpeed (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -739,18 +767,18 @@ end
 
 
 
-function edit16_Callback(hObject, eventdata, handles)
-% hObject    handle to edit16 (see GCBO)
+function editAccelerationTime_Callback(hObject, eventdata, handles)
+% hObject    handle to editAccelerationTime (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit16 as text
-%        str2double(get(hObject,'String')) returns contents of edit16 as a double
+% Hints: get(hObject,'String') returns contents of editAccelerationTime as text
+%        str2double(get(hObject,'String')) returns contents of editAccelerationTime as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit16_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit16 (see GCBO)
+function editAccelerationTime_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editAccelerationTime (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -762,18 +790,18 @@ end
 
 
 
-function edit20_Callback(hObject, eventdata, handles)
-% hObject    handle to edit20 (see GCBO)
+function editBrakingDistance_Callback(hObject, eventdata, handles)
+% hObject    handle to editBrakingDistance (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit20 as text
-%        str2double(get(hObject,'String')) returns contents of edit20 as a double
+% Hints: get(hObject,'String') returns contents of editBrakingDistance as text
+%        str2double(get(hObject,'String')) returns contents of editBrakingDistance as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit20_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit20 (see GCBO)
+function editBrakingDistance_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editBrakingDistance (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -785,18 +813,18 @@ end
 
 
 
-function edit22_Callback(hObject, eventdata, handles)
-% hObject    handle to edit22 (see GCBO)
+function editBrakingTime_Callback(hObject, eventdata, handles)
+% hObject    handle to editBrakingTime (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit22 as text
-%        str2double(get(hObject,'String')) returns contents of edit22 as a double
+% Hints: get(hObject,'String') returns contents of editBrakingTime as text
+%        str2double(get(hObject,'String')) returns contents of editBrakingTime as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit22_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit22 (see GCBO)
+function editBrakingTime_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editBrakingTime (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -808,18 +836,18 @@ end
 
 
 
-function edit23_Callback(hObject, eventdata, handles)
-% hObject    handle to edit23 (see GCBO)
+function editTotalDistance_Callback(hObject, eventdata, handles)
+% hObject    handle to editTotalDistance (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit23 as text
-%        str2double(get(hObject,'String')) returns contents of edit23 as a double
+% Hints: get(hObject,'String') returns contents of editTotalDistance as text
+%        str2double(get(hObject,'String')) returns contents of editTotalDistance as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit23_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit23 (see GCBO)
+function editTotalDistance_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editTotalDistance (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -831,18 +859,180 @@ end
 
 
 
-function edit24_Callback(hObject, eventdata, handles)
-% hObject    handle to edit24 (see GCBO)
+function editTotalTime_Callback(hObject, eventdata, handles)
+% hObject    handle to editTotalTime (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit24 as text
-%        str2double(get(hObject,'String')) returns contents of edit24 as a double
+% Hints: get(hObject,'String') returns contents of editTotalTime as text
+%        str2double(get(hObject,'String')) returns contents of editTotalTime as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function edit24_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit24 (see GCBO)
+function editTotalTime_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editTotalTime (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in popupmenuSimulationType.
+function popupmenuSimulationType_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenuSimulationType (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenuSimulationType contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenuSimulationType
+global SimulationType
+SimulationType = get(hObject, 'Value');
+
+% --- Executes during object creation, after setting all properties.
+function popupmenuSimulationType_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenuSimulationType (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function editAccelerationTimeOnTheWings_Callback(hObject, eventdata, handles)
+% hObject    handle to editAccelerationTimeOnTheWings (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editAccelerationTimeOnTheWings as text
+%        str2double(get(hObject,'String')) returns contents of editAccelerationTimeOnTheWings as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editAccelerationTimeOnTheWings_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editAccelerationTimeOnTheWings (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function editAccelerationDistanceOnTheWings_Callback(hObject, eventdata, handles)
+% hObject    handle to editAccelerationDistanceOnTheWings (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editAccelerationDistanceOnTheWings as text
+%        str2double(get(hObject,'String')) returns contents of editAccelerationDistanceOnTheWings as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editAccelerationDistanceOnTheWings_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editAccelerationDistanceOnTheWings (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function editAccelerationTimeGlindingMode_Callback(hObject, eventdata, handles)
+% hObject    handle to editAccelerationTimeGlindingMode (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editAccelerationTimeGlindingMode as text
+%        str2double(get(hObject,'String')) returns contents of editAccelerationTimeGlindingMode as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editAccelerationTimeGlindingMode_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editAccelerationTimeGlindingMode (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function editAccelerationDistanceGlindingMode_Callback(hObject, eventdata, handles)
+% hObject    handle to editAccelerationDistanceGlindingMode (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editAccelerationDistanceGlindingMode as text
+%        str2double(get(hObject,'String')) returns contents of editAccelerationDistanceGlindingMode as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editAccelerationDistanceGlindingMode_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editAccelerationDistanceGlindingMode (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function editAccelerationTimeDisplacementMode_Callback(hObject, eventdata, handles)
+% hObject    handle to editAccelerationTimeDisplacementMode (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editAccelerationTimeDisplacementMode as text
+%        str2double(get(hObject,'String')) returns contents of editAccelerationTimeDisplacementMode as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editAccelerationTimeDisplacementMode_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editAccelerationTimeDisplacementMode (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function editAccelerationDistanceDisplacementMode_Callback(hObject, eventdata, handles)
+% hObject    handle to editAccelerationDistanceDisplacementMode (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editAccelerationDistanceDisplacementMode as text
+%        str2double(get(hObject,'String')) returns contents of editAccelerationDistanceDisplacementMode as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editAccelerationDistanceDisplacementMode_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editAccelerationDistanceDisplacementMode (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
