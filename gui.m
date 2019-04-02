@@ -441,49 +441,43 @@ function pushbuttonStartSimulation_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbuttonStartSimulation (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global Model
+
+% Global variables
+global Model InitialValueX0 InitialValueV0 t_0 t_end
+
+% Enums
+SIMULATION_TYPE_ACCELERATION = 1;
+SIMULATION_TYPE_BRAKING = 2;
+SIMULATION_TYPE_BOTH_ACCELERATION_AND_BRAKING = 3;
+MODEL_TYPE_SURFACE_SHIP = 2;
+MODEL_TYPE_SURFACE_BOAT = 3;
+MODEL_TYPE_SUBMARINE_SHIP = 4;
+
+% Simulate system model (surface or submarine) with continuous or differential
+% method with acceleration, braking or both acceleration + braking type
+% if there are no error marks
 if updateAllErrorMarks(handles) == false
+    % 1. Get info about simulation
     modelType = get(handles.popupmenuType, "Value");
+    simulationType = get(handles.popupmenuSimulationType, "Value");
     integrationMethod = get(handles.popupmenuIntegrationMethod, "Value");
+    % 2. Choose solve method for system
     switch modelType
-        case 2
-            if integrationMethod == 1
-                [t, x, p, v] = solveContinuousModelForSurfaceTransport(Model);
-            else
-                [t, x, p, v] = solveDifferenceModelForSurfaceTransport(Model);
-            end
-        case 3
-             if integrationMethod == 1
-                [t, x, p, v] = solveContinuousModelForSurfaceTransport(Model);
-            else
-                [t, x, p, v] = solveDifferenceModelForSurfaceTransport(Model);
-            end
-        case 4
-            if integrationMethod == 1
-                [t, x, p, v] = solveContinuousModelForSubmarineTransport(Model);
-            else
-                [t, x, p, v] = solveDifferenceModelForSubmarineTransport(Model);
-            end
-        otherwise
-            t = 0; x = 0; p = 0; v = 0;
+        case MODEL_TYPE_SURFACE_SHIP
+        	solveModel = @(x0, v0, t_0, t_end, simulationType) solveSurfaceTransportModel(Model, ...
+                x0, v0, t_0, t_end, simulationType, integrationMethod);
+        case MODEL_TYPE_SURFACE_BOAT
+        	solveModel = @(x0, v0, t_0, t_end, simulationType) solveSurfaceTransportModel(Model, ...
+                x0, v0, t_0, t_end, simulationType, integrationMethod);
+        case MODEL_TYPE_SUBMARINE_SHIP
+            solveModel = @(x0, v0, t_0, t_end, simulationType) solveSubmarineTransportModel(Model, ...
+                x0, v0, t_0, t_end, simulationType, integrationMethod);
     end
 
-    % Create graph
-    yyaxis left
-    plot(t, x, 'b')
-    ylabel('Distance x, meters')
-    yyaxis right
-    plot(t, p, 'r', ...
-         t, v, 'g')
-    ylabel('Traction force, %, Speed, meters/sec')
-    grid on;
-    title('Blue - distance, red - traction force, green - speed')
-    
-    % Calculate parameters
-    global SimulationType
-    % The criterion for achieving the maximum speed - 1%
-    % 1. Acceleration (any ship)
-    if SimulationType == 1
+    % 3. Simulate system and calculate parameters
+    % 3.1. Acceleration (any ship)
+    if simulationType == SIMULATION_TYPE_ACCELERATION
+        [t, x, p, v] = solveModel(InitialValueX0, InitialValueV0, t_0, t_end, SIMULATION_TYPE_ACCELERATION);
         outputParameters = calculateAccelerationParameters(t, x, v);
         
         set(handles.editAccelerationMaximumSpeed, "String", outputParameters.MaxSpeed)
@@ -499,9 +493,36 @@ if updateAllErrorMarks(handles) == false
         set(handles.editAccelerationTimeOnTheWings, "String", outputParameters.TimeOnTheWings)
         set(handles.editAccelerationDistanceOnTheWings, "String", outputParameters.DistanceOnTheWings)
 
-    % 2. Braking
-    % 3. Both Acceleration + braking
+    % 3.2. Braking
+    elseif simulationType == SIMULATION_TYPE_BRAKING
+        [t, x, p, v] = solveModel(InitialValueX0, InitialValueV0, t_0, t_end, SIMULATION_TYPE_BRAKING);
+        
+    % 3.3. Both Acceleration + braking
+    elseif simulationType == SIMULATION_TYPE_BOTH_ACCELERATION_AND_BRAKING
+        [t1, x1, p1, v1] = solveModel(InitialValueX0, InitialValueV0, t_0, t_end, SIMULATION_TYPE_ACCELERATION);
+        parameters = calculateAccelerationParameters(t1, x1, v1);
+        t1 = t1(1 : parameters.PointsAmount); x1 = x1(1 : parameters.PointsAmount);
+        p1 = p1(1 : parameters.PointsAmount); v1 = v1(1 : parameters.PointsAmount);
+        [t2, x2, p2, v2] = solveModel(x1(end), v1(end), t1(end), t1(end) + (t_end - t_0), SIMULATION_TYPE_BRAKING); 
     end
+    
+    % 4. Create graph
+    yyaxis left
+    if (simulationType == SIMULATION_TYPE_ACCELERATION) | (simulationType == SIMULATION_TYPE_BRAKING)
+        plot(t, x, 'b')
+    elseif simulationType == SIMULATION_TYPE_BOTH_ACCELERATION_AND_BRAKING
+        plot(t1, x1, 'b', t2, x2,'b')
+    end
+    ylabel('Distance x, meters')
+    yyaxis right
+    if (simulationType == SIMULATION_TYPE_ACCELERATION) | (simulationType == SIMULATION_TYPE_BRAKING)
+        plot(t, p, 'r', t, v, 'g')
+    elseif simulationType == SIMULATION_TYPE_BOTH_ACCELERATION_AND_BRAKING
+        plot(t1, p1, 'r-', t1, v1, 'g', t2, p2, 'r', t2, v2, 'g')
+    end
+    ylabel('Traction force, %, Speed, meters/sec')
+    grid on;
+    title('Blue - distance, red - traction force, green - speed')
 end
 
 
