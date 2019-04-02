@@ -22,7 +22,7 @@ function varargout = gui(varargin)
 
 % Edit the above text to modify the response to help gui
 
-% Last Modified by GUIDE v2.5 02-Apr-2019 15:52:48
+% Last Modified by GUIDE v2.5 02-Apr-2019 20:08:52
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -67,6 +67,7 @@ InitialValueX0 = 0;
 InitialValueV0 = 0; 
 t_0 = 0; 
 t_end = 100;
+RelativeThrust = 20;
 
 % --- Outputs from this function are returned to the command line.
 function varargout = gui_OutputFcn(hObject, eventdata, handles) 
@@ -493,17 +494,61 @@ if updateAllErrorMarks(handles) == false
         set(handles.editAccelerationTimeOnTheWings, "String", outputParameters.TimeOnTheWings)
         set(handles.editAccelerationDistanceOnTheWings, "String", outputParameters.DistanceOnTheWings)
 
+        set(handles.editBrakingTime, "String", "-")
+        set(handles.editBrakingDistance, "String", "-")
+        
+        set(handles.editTotalTime, "String", "-")
+        set(handles.editTotalDistance, "String", "-")
     % 3.2. Braking
     elseif simulationType == SIMULATION_TYPE_BRAKING
         [t, x, p, v] = solveModel(InitialValueX0, InitialValueV0, t_0, t_end, SIMULATION_TYPE_BRAKING);
+        outputParameters = calculateBrakingParameters(t, x, v);
         
+        set(handles.editAccelerationMaximumSpeed, "String", "-")
+        set(handles.editAccelerationTime, "String", "-")
+        set(handles.editAccelerationDistance, "String", "-")
+        
+        set(handles.editAccelerationTimeDisplacementMode, "String", "-")
+        set(handles.editAccelerationDistanceDisplacementMode, "String", "-")
+        
+        set(handles.editAccelerationTimeGlindingMode, "String", "-")
+        set(handles.editAccelerationDistanceGlindingMode, "String", "-")
+        
+        set(handles.editAccelerationTimeOnTheWings, "String", "-")
+        set(handles.editAccelerationDistanceOnTheWings, "String", "-")
+        
+        set(handles.editBrakingTime, "String", outputParameters.Time)
+        set(handles.editBrakingDistance, "String", outputParameters.Distance)
+        
+        set(handles.editTotalTime, "String", "-")
+        set(handles.editTotalDistance, "String", "-")
     % 3.3. Both Acceleration + braking
     elseif simulationType == SIMULATION_TYPE_BOTH_ACCELERATION_AND_BRAKING
         [t1, x1, p1, v1] = solveModel(InitialValueX0, InitialValueV0, t_0, t_end, SIMULATION_TYPE_ACCELERATION);
-        parameters = calculateAccelerationParameters(t1, x1, v1);
-        t1 = t1(1 : parameters.PointsAmount); x1 = x1(1 : parameters.PointsAmount);
-        p1 = p1(1 : parameters.PointsAmount); v1 = v1(1 : parameters.PointsAmount);
-        [t2, x2, p2, v2] = solveModel(x1(end), v1(end), t1(end), t1(end) + (t_end - t_0), SIMULATION_TYPE_BRAKING); 
+        accerationParameters = calculateAccelerationParameters(t1, x1, v1);
+        t1 = t1(1 : accerationParameters.PointsAmount); x1 = x1(1 : accerationParameters.PointsAmount);
+        p1 = p1(1 : accerationParameters.PointsAmount); v1 = v1(1 : accerationParameters.PointsAmount);
+        [t2, x2, p2, v2] = solveModel(x1(end), v1(end), t1(end), t_end + 0.5, SIMULATION_TYPE_BRAKING); 
+        brakingParameters = calculateBrakingParameters(t2, x2, v2);
+        
+        set(handles.editAccelerationMaximumSpeed, "String", accerationParameters.MaxSpeed)
+        set(handles.editAccelerationTime, "String", accerationParameters.MaxSpeedTime)
+        set(handles.editAccelerationDistance, "String", accerationParameters.Distance)
+        
+        set(handles.editAccelerationTimeDisplacementMode, "String", accerationParameters.TimeDisplacementMode)
+        set(handles.editAccelerationDistanceDisplacementMode, "String", accerationParameters.DistanceDisplacementMode)
+        
+        set(handles.editAccelerationTimeGlindingMode, "String", accerationParameters.TimeGlindingMode)
+        set(handles.editAccelerationDistanceGlindingMode, "String", accerationParameters.DistanceGlindingMode)
+        
+        set(handles.editAccelerationTimeOnTheWings, "String", accerationParameters.TimeOnTheWings)
+        set(handles.editAccelerationDistanceOnTheWings, "String", accerationParameters.DistanceOnTheWings)
+
+        set(handles.editBrakingTime, "String", brakingParameters.Time)
+        set(handles.editBrakingDistance, "String", brakingParameters.Distance)
+        
+        set(handles.editTotalTime, "String", accerationParameters.MaxSpeedTime + brakingParameters.Time)
+        set(handles.editTotalDistance, "String", accerationParameters.Distance + brakingParameters.Distance)
     end
     
     % 4. Create graph
@@ -655,6 +700,10 @@ function sliderRelativeThrust_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+global RelativeThrust
+PERCENTAGE_DIVIDER = 5; % from 100% max to 20% max
+RelativeThrust = get(hObject, "Value") / PERCENTAGE_DIVIDER;
+set(handles.editRelativeThrust, "String", RelativeThrust);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -667,7 +716,7 @@ function sliderRelativeThrust_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
-
+set(hObject,'Value', 100);
 
 
 function editOde45TimeStart_Callback(hObject, eventdata, handles)
@@ -1062,3 +1111,27 @@ function editAccelerationDistanceDisplacementMode_CreateFcn(hObject, eventdata, 
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+
+function editRelativeThrust_Callback(hObject, eventdata, handles)
+% hObject    handle to editRelativeThrust (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editRelativeThrust as text
+%        str2double(get(hObject,'String')) returns contents of editRelativeThrust as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editRelativeThrust_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editRelativeThrust (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+set(hObject,'String', 20);
