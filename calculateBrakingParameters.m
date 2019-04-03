@@ -13,6 +13,6 @@ for lastPointIndex = 1 : length(t)
         break
 	end
 end
-parameters.Time = t(lastPointIndex);
-parameters.Distance = x(lastPointIndex);
+parameters.Time = t(lastPointIndex) - t(1);
+parameters.Distance = x(lastPointIndex) - x(1);
 

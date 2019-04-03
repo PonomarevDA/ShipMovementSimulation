@@ -28,18 +28,18 @@ TON_TO_KILOGRAM = 1000;
 
 % Calculate model parameters and 
 % translate them to international system of units format
-V = model.V * KNOT_TO_METER_PER_SEC;
-N = model.N * HORSEPOWER_TO_WATT;
-F = N / V;
+V = model.V * KNOT_TO_METER_PER_SEC
+N = model.N * HORSEPOWER_TO_WATT
+F = N / V
 if model.W < 10000
-    deltaF = F * 0.1;
+    deltaF = F * 0.1
 else
-    deltaF = F * 0.2;
+    deltaF = F * 0.2
 end
 if RelativeThrust < deltaF / F * 100
     deltaF = F * RelativeThrust / 100;
 end
-M = model.W * TON_TO_KILOGRAM;
+M = model.W * TON_TO_KILOGRAM
 
 
 % Solve Continuous or Differential model
@@ -69,9 +69,9 @@ if integrationMethod == INTEGRATION_METHOD_CONTINUOUS
     
 elseif integrationMethod == INTEGRATION_METHOD_DIFFERENTIAL
     % Init parameters
-    deltaTime = 0.01;
-    deltaPMax = deltaTime*(deltaF / F)*100;
-    A = F / (V^2);
+    deltaTime = 1
+    deltaPMax = deltaTime*(deltaF / F)*100
+    A = F / (V^2)
     t = t_0 * ones(50, 1);
     v = v0 * ones(50, 1);
     x = x0 * ones(50, 1); 
@@ -80,9 +80,11 @@ elseif integrationMethod == INTEGRATION_METHOD_DIFFERENTIAL
     if simulationType == SIMULATION_TYPE_ACCELERATION
         p = zeros(50, 1);
         calculateNewP = @(oldP) oldP + deltaPMax;
+        arrayTreshold = 2;
     elseif simulationType == SIMULATION_TYPE_BRAKING  
         p = 100*ones(50, 1);
         calculateNewP = @(oldP) oldP - deltaPMax;
+        arrayTreshold = 3;
     end
     % Solve system model
     while t(index) < t_end
@@ -93,14 +95,14 @@ elseif integrationMethod == INTEGRATION_METHOD_DIFFERENTIAL
             p(index + 1) = -100;
         end
         deltaXi = x(index) - x(index - 1);
-        x(index + 1) = x(index) + deltaXi + (p(index) * F * deltaTime^2/100 - A * deltaXi * abs(deltaXi)) / M;
+        x(index + 1) = x(index) + deltaXi + (p(index + 1) * F * deltaTime^2/100 - A * deltaXi * abs(deltaXi)) / M;
         v(index + 1) = (x(index + 1) - x(index)) / deltaTime;
         t(index + 1) = t(index) + deltaTime;
         index = index + 1;
     end
     % Reduce the size of the array
-    t = t(2 : index);
-    x = x(2 : index);
-    p = p(2 : index);
-    v = v(2 : index);
+    t = t(arrayTreshold : index);
+    x = x(arrayTreshold : index);
+    p = p(arrayTreshold : index);
+    v = v(arrayTreshold : index);
 end

@@ -450,6 +450,7 @@ global Model InitialValueX0 InitialValueV0 t_0 t_end
 SIMULATION_TYPE_ACCELERATION = 1;
 SIMULATION_TYPE_BRAKING = 2;
 SIMULATION_TYPE_BOTH_ACCELERATION_AND_BRAKING = 3;
+MODEL_TYPE_NO_MODEL = 1;
 MODEL_TYPE_SURFACE_SHIP = 2;
 MODEL_TYPE_SURFACE_BOAT = 3;
 MODEL_TYPE_SUBMARINE_SHIP = 4;
@@ -457,9 +458,9 @@ MODEL_TYPE_SUBMARINE_SHIP = 4;
 % Simulate system model (surface or submarine) with continuous or differential
 % method with acceleration, braking or both acceleration + braking type
 % if there are no error marks
-if updateAllErrorMarks(handles) == false
+modelType = get(handles.popupmenuType, "Value");
+if (updateAllErrorMarks(handles) == false) & (modelType ~= MODEL_TYPE_NO_MODEL)
     % 1. Get info about simulation
-    modelType = get(handles.popupmenuType, "Value");
     simulationType = get(handles.popupmenuSimulationType, "Value");
     integrationMethod = get(handles.popupmenuIntegrationMethod, "Value");
     % 2. Choose solve method for system
@@ -479,6 +480,10 @@ if updateAllErrorMarks(handles) == false
     % 3.1. Acceleration (any ship)
     if simulationType == SIMULATION_TYPE_ACCELERATION
         [t, x, p, v] = solveModel(InitialValueX0, InitialValueV0, t_0, t_end, SIMULATION_TYPE_ACCELERATION);
+        
+%         global S
+%         S = [t, x, p, v];
+        
         outputParameters = calculateAccelerationParameters(t, x, v);
         
         set(handles.editAccelerationMaximumSpeed, "String", outputParameters.MaxSpeed)
@@ -530,6 +535,9 @@ if updateAllErrorMarks(handles) == false
         p1 = p1(1 : accerationParameters.PointsAmount); v1 = v1(1 : accerationParameters.PointsAmount);
         [t2, x2, p2, v2] = solveModel(x1(end), v1(end), t1(end), t_end + 0.5, SIMULATION_TYPE_BRAKING); 
         brakingParameters = calculateBrakingParameters(t2, x2, v2);
+        
+%         global S
+%         S = [[t1; t2], [x1; x2], [p1; p2], [v1; v2]];
         
         set(handles.editAccelerationMaximumSpeed, "String", accerationParameters.MaxSpeed)
         set(handles.editAccelerationTime, "String", accerationParameters.MaxSpeedTime)
