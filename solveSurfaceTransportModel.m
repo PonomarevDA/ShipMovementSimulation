@@ -12,12 +12,12 @@
 function [t, x, p, v] = solveSurfaceTransportModel(model, ...
     x0, v0, t_0, t_end, simulationType, integrationMethod)
 
-global RelativeThrust
-RelativeThrust
+global RelativeThrust DesiredSpeed
 
 % Enums
 SIMULATION_TYPE_ACCELERATION = 1;
 SIMULATION_TYPE_BRAKING = 2;
+SIMULATION_TYPE_CRUISE_CONTROL = 4;
 INTEGRATION_METHOD_CONTINUOUS = 1;
 INTEGRATION_METHOD_DIFFERENTIAL = 2;
 
@@ -28,19 +28,25 @@ TON_TO_KILOGRAM = 1000;
 
 % Calculate model parameters and 
 % translate them to international system of units format
-V = model.V * KNOT_TO_METER_PER_SEC
-N = model.N * HORSEPOWER_TO_WATT
-F = N / V
+V = model.V * KNOT_TO_METER_PER_SEC;
+N = model.N * HORSEPOWER_TO_WATT;
+F = N / V;
 if model.W < 10000
-    deltaF = F * 0.1
+    deltaF = F * 0.1;
 else
-    deltaF = F * 0.2
+    deltaF = F * 0.2;
 end
 if RelativeThrust < deltaF / F * 100
     deltaF = F * RelativeThrust / 100;
 end
-M = model.W * TON_TO_KILOGRAM
+M = model.W * TON_TO_KILOGRAM;
 
+% Init PID regulator
+global i Iteration Times Powers 
+i = 0;
+Iteration = 1;
+Powers = 0;
+Times = t_0;
 
 % Solve Continuous or Differential model
 if integrationMethod == INTEGRATION_METHOD_CONTINUOUS
@@ -49,23 +55,25 @@ if integrationMethod == INTEGRATION_METHOD_CONTINUOUS
     A = F / (V^2);
     % Init other part of system model
     if simulationType == SIMULATION_TYPE_ACCELERATION
-        P = @(t) 100 + ((t - t_0) < timeWhenPWillBeMax).*((t - t_0).*100./timeWhenPWillBeMax - 100);
-        F = @(t) P(t)*F/100;
-        dx_dt = @(t, s) s(2);
-        dv_dt = @(t, s) 1 / M * (F(t) - A * s(2) * abs(s(2)));
-        continuousModel = @(t, s) [dx_dt(t, s); dv_dt(t, s)];
+        P = @(t, v) 100 + ((t - t_0) < timeWhenPWillBeMax).*((t - t_0).*100./timeWhenPWillBeMax - 100);
     elseif simulationType == SIMULATION_TYPE_BRAKING
-        P = @(t) -100 + ((t - t_0) < 2*timeWhenPWillBeMax).*(-(t - t_0).*100./timeWhenPWillBeMax + 200);
-        F = @(t) P(t)*F/100;
-        dx_dt = @(t, s) s(2);
-        dv_dt = @(t, s) 1 / M * (F(t) - A * s(2) * abs(s(2)));
-        continuousModel = @(t, s) [dx_dt(t, s); dv_dt(t, s)];
+        P = @(t, v) -100 + ((t - t_0) < 2*timeWhenPWillBeMax).*(-(t - t_0).*100./timeWhenPWillBeMax + 200);
+    elseif simulationType == SIMULATION_TYPE_CRUISE_CONTROL
+        P = @(t, v) calculatePower(t, v, DesiredSpeed);
     end
+	F = @(t, v) P(t, v)*F/100;
+	dx_dt = @(t, s) s(2);
+	dv_dt = @(t, s) 1 / M * (F(t, s(2)) - A * s(2) * abs(s(2)));
+	continuousModel = @(t, s) [dx_dt(t, s); dv_dt(t, s)];
     % Solve system by ode45
     [t, s] = ode45(continuousModel, [t_0 t_end], [x0 v0]);
-    p = P(t);
     x = s(1:end, 1);
     v = s(1:end, 2);
+    if simulationType == SIMULATION_TYPE_CRUISE_CONTROL
+    	p = getPowerFromPid();
+    else
+        p = P(t, v);
+    end
     
 elseif integrationMethod == INTEGRATION_METHOD_DIFFERENTIAL
     % Init parameters
@@ -79,16 +87,21 @@ elseif integrationMethod == INTEGRATION_METHOD_DIFFERENTIAL
     index = 2; 
     if simulationType == SIMULATION_TYPE_ACCELERATION
         p = zeros(50, 1);
-        calculateNewP = @(oldP) oldP + deltaPMax;
+        calculateNewP = @(oldP, v) oldP + deltaPMax;
         arrayTreshold = 2;
     elseif simulationType == SIMULATION_TYPE_BRAKING  
         p = 100*ones(50, 1);
-        calculateNewP = @(oldP) oldP - deltaPMax;
+        calculateNewP = @(oldP, v) oldP - deltaPMax;
         arrayTreshold = 3;
+    elseif simulationType == SIMULATION_TYPE_CRUISE_CONTROL
+        p = zeros(50, 1);
+        desiredSpeed = 5;
+        calculateNewP = @(oldP, v) calculatePower(v, desiredSpeed);
+        arrayTreshold = 2;
     end
     % Solve system model
     while t(index) < t_end
-        p(index + 1) = calculateNewP(p(index));
+        p(index + 1) = calculateNewP(p(index), v(index));
         if p(index + 1) > 100
             p(index + 1) = 100;
         elseif p(index + 1) < -100
@@ -105,4 +118,12 @@ elseif integrationMethod == INTEGRATION_METHOD_DIFFERENTIAL
     x = x(arrayTreshold : index);
     p = p(arrayTreshold : index);
     v = v(arrayTreshold : index);
+    
+    % Debug
+    RelativeThrust
+    V
+    N
+    F
+    M
+    deltaF
 end

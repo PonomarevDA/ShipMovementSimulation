@@ -22,7 +22,7 @@ function varargout = gui(varargin)
 
 % Edit the above text to modify the response to help gui
 
-% Last Modified by GUIDE v2.5 02-Apr-2019 20:08:52
+% Last Modified by GUIDE v2.5 04-Apr-2019 19:36:06
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -444,25 +444,25 @@ function pushbuttonStartSimulation_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Global variables
-global Model InitialValueX0 InitialValueV0 t_0 t_end
+global Model InitialValueX0 InitialValueV0 t_0 t_end DebugInfo Times Powers
 
 % Enums
 SIMULATION_TYPE_ACCELERATION = 1;
 SIMULATION_TYPE_BRAKING = 2;
 SIMULATION_TYPE_BOTH_ACCELERATION_AND_BRAKING = 3;
+SIMULATION_TYPE_CRUISE_CONTROL = 4;
 MODEL_TYPE_NO_MODEL = 1;
 MODEL_TYPE_SURFACE_SHIP = 2;
 MODEL_TYPE_SURFACE_BOAT = 3;
 MODEL_TYPE_SUBMARINE_SHIP = 4;
 
-% Simulate system model (surface or submarine) with continuous or differential
-% method with acceleration, braking or both acceleration + braking type
-% if there are no error marks
+% Simulate system model if there are no error marks
 modelType = get(handles.popupmenuType, "Value");
 if (updateAllErrorMarks(handles) == false) & (modelType ~= MODEL_TYPE_NO_MODEL)
     % 1. Get info about simulation
     simulationType = get(handles.popupmenuSimulationType, "Value");
     integrationMethod = get(handles.popupmenuIntegrationMethod, "Value");
+    
     % 2. Choose solve method for system
     switch modelType
         case MODEL_TYPE_SURFACE_SHIP
@@ -480,10 +480,6 @@ if (updateAllErrorMarks(handles) == false) & (modelType ~= MODEL_TYPE_NO_MODEL)
     % 3.1. Acceleration (any ship)
     if simulationType == SIMULATION_TYPE_ACCELERATION
         [t, x, p, v] = solveModel(InitialValueX0, InitialValueV0, t_0, t_end, SIMULATION_TYPE_ACCELERATION);
-        
-%         global S
-%         S = [t, x, p, v];
-        
         outputParameters = calculateAccelerationParameters(t, x, v);
         
         set(handles.editAccelerationMaximumSpeed, "String", outputParameters.MaxSpeed)
@@ -531,13 +527,13 @@ if (updateAllErrorMarks(handles) == false) & (modelType ~= MODEL_TYPE_NO_MODEL)
     elseif simulationType == SIMULATION_TYPE_BOTH_ACCELERATION_AND_BRAKING
         [t1, x1, p1, v1] = solveModel(InitialValueX0, InitialValueV0, t_0, t_end, SIMULATION_TYPE_ACCELERATION);
         accerationParameters = calculateAccelerationParameters(t1, x1, v1);
-        t1 = t1(1 : accerationParameters.PointsAmount); x1 = x1(1 : accerationParameters.PointsAmount);
-        p1 = p1(1 : accerationParameters.PointsAmount); v1 = v1(1 : accerationParameters.PointsAmount);
+        t1 = t1(1 : accerationParameters.PointsAmount); 
+        x1 = x1(1 : accerationParameters.PointsAmount);
+        p1 = p1(1 : accerationParameters.PointsAmount); 
+        v1 = v1(1 : accerationParameters.PointsAmount);
+        
         [t2, x2, p2, v2] = solveModel(x1(end), v1(end), t1(end), t_end + 0.5, SIMULATION_TYPE_BRAKING); 
         brakingParameters = calculateBrakingParameters(t2, x2, v2);
-        
-%         global S
-%         S = [[t1; t2], [x1; x2], [p1; p2], [v1; v2]];
         
         set(handles.editAccelerationMaximumSpeed, "String", accerationParameters.MaxSpeed)
         set(handles.editAccelerationTime, "String", accerationParameters.MaxSpeedTime)
@@ -557,11 +553,33 @@ if (updateAllErrorMarks(handles) == false) & (modelType ~= MODEL_TYPE_NO_MODEL)
         
         set(handles.editTotalTime, "String", accerationParameters.MaxSpeedTime + brakingParameters.Time)
         set(handles.editTotalDistance, "String", accerationParameters.Distance + brakingParameters.Distance)
+    elseif simulationType == SIMULATION_TYPE_CRUISE_CONTROL
+    	[t, x, p, v] = solveModel(InitialValueX0, InitialValueV0, t_0, t_end, simulationType);
+        set(handles.editAccelerationMaximumSpeed, "String", "-")
+        set(handles.editAccelerationTime, "String", "-")
+        set(handles.editAccelerationDistance, "String", "-")
+        
+        set(handles.editAccelerationTimeDisplacementMode, "String", "-")
+        set(handles.editAccelerationDistanceDisplacementMode, "String", "-")
+        
+        set(handles.editAccelerationTimeGlindingMode, "String", "-")
+        set(handles.editAccelerationDistanceGlindingMode, "String", "-")
+        
+        set(handles.editAccelerationTimeOnTheWings, "String", "-")
+        set(handles.editAccelerationDistanceOnTheWings, "String", "-")
+
+        set(handles.editBrakingTime, "String", "-")
+        set(handles.editBrakingDistance, "String", "-")
+        
+        set(handles.editTotalTime, "String", "-")
+        set(handles.editTotalDistance, "String", "-")
     end
     
     % 4. Create graph
+    figure
     yyaxis left
-    if (simulationType == SIMULATION_TYPE_ACCELERATION) | (simulationType == SIMULATION_TYPE_BRAKING)
+    if (simulationType == SIMULATION_TYPE_ACCELERATION) | (simulationType == SIMULATION_TYPE_BRAKING) | ...
+       (simulationType == SIMULATION_TYPE_CRUISE_CONTROL)
         plot(t, x, 'b')
     elseif simulationType == SIMULATION_TYPE_BOTH_ACCELERATION_AND_BRAKING
         plot(t1, x1, 'b', t2, x2,'b')
@@ -570,12 +588,22 @@ if (updateAllErrorMarks(handles) == false) & (modelType ~= MODEL_TYPE_NO_MODEL)
     yyaxis right
     if (simulationType == SIMULATION_TYPE_ACCELERATION) | (simulationType == SIMULATION_TYPE_BRAKING)
         plot(t, p, 'r', t, v, 'g')
+    elseif simulationType == SIMULATION_TYPE_CRUISE_CONTROL
+        [T, P] = getPowerFromPid();
+        plot(T, P, 'r', t, v, 'g')
     elseif simulationType == SIMULATION_TYPE_BOTH_ACCELERATION_AND_BRAKING
         plot(t1, p1, 'r-', t1, v1, 'g', t2, p2, 'r', t2, v2, 'g')
     end
     ylabel('Traction force, %, Speed, meters/sec')
     grid on;
     title('Blue - distance, red - traction force, green - speed')
+    
+	% Debug information
+    if simulationType == SIMULATION_TYPE_BOTH_ACCELERATION_AND_BRAKING
+        DebugInfo = [[t1; t2], [x1; x2], [p1; p2], [v1; v2]];
+    else
+        %DebugInfo = [t, x, p, v];
+    end
 end
 
 
@@ -1143,3 +1171,57 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 set(hObject,'String', 20);
+
+
+
+function editCruiseControl_Callback(hObject, eventdata, handles)
+% hObject    handle to editCruiseControl (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of editCruiseControl as text
+%        str2double(get(hObject,'String')) returns contents of editCruiseControl as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function editCruiseControl_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to editCruiseControl (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on slider movement.
+function sliderCruiseControl_Callback(hObject, eventdata, handles)
+% hObject    handle to sliderCruiseControl (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+global DesiredSpeed Model
+KNOT_TO_METER_PER_SEC = 0.51;
+if (Model.Type == "Surface ship") | (Model.Type == "Surface boat")
+    DesiredSpeed = Model.V / 100 * get(hObject, "Value");
+else
+    DesiredSpeed = Model.V2 / 100 * get(hObject, "Value");
+end
+DesiredSpeed = DesiredSpeed * KNOT_TO_METER_PER_SEC;
+set(handles.editCruiseControl, "String", get(hObject, "Value"));
+
+
+% --- Executes during object creation, after setting all properties.
+function sliderCruiseControl_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to sliderCruiseControl (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
