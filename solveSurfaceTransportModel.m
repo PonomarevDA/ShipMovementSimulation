@@ -87,21 +87,20 @@ elseif integrationMethod == INTEGRATION_METHOD_DIFFERENTIAL
     index = 2; 
     if simulationType == SIMULATION_TYPE_ACCELERATION
         p = zeros(50, 1);
-        calculateNewP = @(oldP, v) oldP + deltaPMax;
+        calculateNewP = @(oldP, v, t) oldP + deltaPMax;
         arrayTreshold = 2;
     elseif simulationType == SIMULATION_TYPE_BRAKING  
         p = 100*ones(50, 1);
-        calculateNewP = @(oldP, v) oldP - deltaPMax;
+        calculateNewP = @(oldP, v, t) oldP - deltaPMax;
         arrayTreshold = 3;
     elseif simulationType == SIMULATION_TYPE_CRUISE_CONTROL
         p = zeros(50, 1);
-        desiredSpeed = 5;
-        calculateNewP = @(oldP, v) calculatePower(v, desiredSpeed);
+        calculateNewP = @(oldP, v, t) calculatePower(t, v, DesiredSpeed);
         arrayTreshold = 2;
     end
     % Solve system model
     while t(index) < t_end
-        p(index + 1) = calculateNewP(p(index), v(index));
+        p(index + 1) = calculateNewP(p(index), v(index), t(index));
         if p(index + 1) > 100
             p(index + 1) = 100;
         elseif p(index + 1) < -100

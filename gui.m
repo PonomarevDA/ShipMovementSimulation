@@ -62,12 +62,13 @@ guidata(hObject, handles);
 % uiwait(handles.figure1);
 
 % Init global variables
-global InitialValueX0 InitialValueV0 t_0 t_end RelativeThrust
+global InitialValueX0 InitialValueV0 t_0 t_end RelativeThrust DesiredSpeed
 InitialValueX0 = 0; 
 InitialValueV0 = 0; 
 t_0 = 0; 
 t_end = 100;
 RelativeThrust = 20;
+DesiredSpeed = 0;
 
 % --- Outputs from this function are returned to the command line.
 function varargout = gui_OutputFcn(hObject, eventdata, handles) 
@@ -576,7 +577,7 @@ if (updateAllErrorMarks(handles) == false) & (modelType ~= MODEL_TYPE_NO_MODEL)
     end
     
     % 4. Create graph
-    figure
+    %figure
     yyaxis left
     if (simulationType == SIMULATION_TYPE_ACCELERATION) | (simulationType == SIMULATION_TYPE_BRAKING) | ...
        (simulationType == SIMULATION_TYPE_CRUISE_CONTROL)
