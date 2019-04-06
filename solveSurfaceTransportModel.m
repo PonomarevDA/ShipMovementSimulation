@@ -31,15 +31,8 @@ TON_TO_KILOGRAM = 1000;
 V = model.V * KNOT_TO_METER_PER_SEC;
 N = model.N * HORSEPOWER_TO_WATT;
 F = N / V;
-if model.W > 10000
-    deltaF = F * 0.1;
-else
-    deltaF = F * 0.2;
-end
-if RelativeThrust < deltaF / F * 100
-    deltaF = F * RelativeThrust / 100;
-end
 M = model.W * TON_TO_KILOGRAM;
+deltaF = calculateDeltaF(N, M, F);
 
 % Init PID regulator
 global i Iteration Times Powers 

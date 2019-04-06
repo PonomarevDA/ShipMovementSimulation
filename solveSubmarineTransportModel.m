@@ -32,15 +32,8 @@ V1 = model.V1 * KNOT_TO_METER_PER_SEC
 V2 = model.V2 * KNOT_TO_METER_PER_SEC
 N = model.N * HORSEPOWER_TO_WATT;
 F = N / Vk
-if model.W > 10000
-    deltaF = F * 0.1
-else
-    deltaF = F * 0.2
-end
-if RelativeThrust < deltaF / F * 100
-    deltaF = F * RelativeThrust / 100
-end
 m = model.W * TON_TO_KILOGRAM
+deltaF = calculateDeltaF(N, m, F)
 A1 = F / (V1^2)
 A2 = F / (V2^2)
 
