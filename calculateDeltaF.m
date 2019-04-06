@@ -6,7 +6,7 @@
 %> @retval value of maximum change in thrust per second
 %======================================================================
 function deltaF = calculateDeltaF(N, M, F)
-global RelativeThrust
+global MaxChangeInRelativeThrustPerSecond
 
 deltaP = 0.0089 + 3822/N;
 if M > 10000000
@@ -19,7 +19,5 @@ if deltaP > maxDeltaP
 end
 deltaF = F*deltaP;
 
-if RelativeThrust < deltaF / F * 100
-    deltaF = F * RelativeThrust / 100;
-end
+MaxChangeInRelativeThrustPerSecond = deltaP * 100;
 

@@ -62,12 +62,12 @@ guidata(hObject, handles);
 % uiwait(handles.figure1);
 
 % Init global variables
-global InitialValueX0 InitialValueV0 t_0 t_end RelativeThrust DesiredSpeed
+global InitialValueX0 InitialValueV0 t_0 t_end InitialRelativeThrust DesiredSpeed
 InitialValueX0 = 0; 
 InitialValueV0 = 0; 
+InitialRelativeThrust = 0;
 t_0 = 0; 
 t_end = 100;
-RelativeThrust = 20;
 DesiredSpeed = 0;
 
 % --- Outputs from this function are returned to the command line.
@@ -445,7 +445,7 @@ function pushbuttonStartSimulation_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Global variables
-global Model InitialValueX0 InitialValueV0 t_0 t_end DebugInfo Times Powers
+global Model InitialValueX0 InitialValueV0 t_0 t_end DebugInfo
 
 % Enums
 SIMULATION_TYPE_ACCELERATION = 1;
@@ -737,10 +737,11 @@ function sliderRelativeThrust_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-global RelativeThrust
-PERCENTAGE_DIVIDER = 5; % from 100% max to 20% max
-RelativeThrust = get(hObject, "Value") / PERCENTAGE_DIVIDER;
-set(handles.editRelativeThrust, "String", RelativeThrust);
+global InitialRelativeThrust
+InitialRelativeThrust = get(hObject, "Value");
+restValue = mod(InitialRelativeThrust, 10);
+InitialRelativeThrust = (fix(InitialRelativeThrust/10) + (restValue >= 5)) * 10;
+set(handles.editRelativeThrust, "String", InitialRelativeThrust);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -753,7 +754,7 @@ function sliderRelativeThrust_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
-set(hObject,'Value', 100);
+set(hObject,'Value', 0);
 
 
 function editOde45TimeStart_Callback(hObject, eventdata, handles)
@@ -1171,7 +1172,7 @@ function editRelativeThrust_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-set(hObject,'String', 20);
+set(hObject,'String', 0);
 
 
 

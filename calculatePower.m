@@ -14,7 +14,7 @@
 %> @retval powerNew - new power
 %======================================================================
 function powerNew = calculatePower(timeCurrent, currentSpeed, desiredSpeed)
-global i RelativeThrust Iteration Powers Times
+global i MaxChangeInRelativeThrustPerSecond Iteration Powers Times
 
 Kp = 5; Ki = 0.5; %Kd = 1;
 % Calculate new integration part
@@ -51,7 +51,7 @@ end
 % Calculate new power with max relative thrust per second limitation
 discrepancy = desiredSpeed - currentSpeed;
 powerDesired = discrepancy * Kp + Ki * discrepancy * i;
-maxChangeInRelativeThrustInThisIteration = RelativeThrust * (timeCurrent - timeLast);
+maxChangeInRelativeThrustInThisIteration = MaxChangeInRelativeThrustPerSecond * (timeCurrent - timeLast);
 if (powerDesired > powerLast) & (powerDesired > powerLast + maxChangeInRelativeThrustInThisIteration)
 	powerNew = powerLast + maxChangeInRelativeThrustInThisIteration;
 elseif powerDesired < powerLast - maxChangeInRelativeThrustInThisIteration

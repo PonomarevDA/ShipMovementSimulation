@@ -12,7 +12,7 @@
 function [t, x, p, v] = solveSurfaceTransportModel(model, ...
     x0, v0, t_0, t_end, simulationType, integrationMethod)
 
-global RelativeThrust DesiredSpeed
+global InitialRelativeThrust DesiredSpeed
 
 % Enums
 SIMULATION_TYPE_ACCELERATION = 1;
@@ -44,13 +44,18 @@ Times = t_0;
 % Solve Continuous or Differential model
 if integrationMethod == INTEGRATION_METHOD_CONTINUOUS
     % Init common part of system model
-    timeWhenPWillBeMax = F / deltaF;
     A = F / (V^2);
     % Init other part of system model
     if simulationType == SIMULATION_TYPE_ACCELERATION
-        P = @(t, v) 100 + ((t - t_0) < timeWhenPWillBeMax).*((t - t_0).*100./timeWhenPWillBeMax - 100);
+        endRelativeThrust = 100;
+        differenceInRelativeThrust = endRelativeThrust - InitialRelativeThrust;
+        relativeThrustSettingTime = F / deltaF * abs(differenceInRelativeThrust) / 100;
+        P = @(t, v) endRelativeThrust + ((t - t_0) < relativeThrustSettingTime).*((t - t_0).*differenceInRelativeThrust./abs(relativeThrustSettingTime) - differenceInRelativeThrust);
     elseif simulationType == SIMULATION_TYPE_BRAKING
-        P = @(t, v) -100 + ((t - t_0) < 2*timeWhenPWillBeMax).*(-(t - t_0).*100./timeWhenPWillBeMax + 200);
+        endRelativeThrust = -100;
+        differenceInRelativeThrust = endRelativeThrust - InitialRelativeThrust;
+        relativeThrustSettingTime = F / deltaF * abs(differenceInRelativeThrust) / 100;
+        P = @(t, v) endRelativeThrust + ((t - t_0) < relativeThrustSettingTime).*((t - t_0).*differenceInRelativeThrust./abs(relativeThrustSettingTime) - differenceInRelativeThrust);
     elseif simulationType == SIMULATION_TYPE_CRUISE_CONTROL
         P = @(t, v) calculatePower(t, v, DesiredSpeed);
     end
@@ -112,7 +117,7 @@ elseif integrationMethod == INTEGRATION_METHOD_DIFFERENTIAL
     v = v(arrayTreshold : index);
     
     % Debug
-    RelativeThrust
+    InitialRelativeThrust
     V
     N
     F
