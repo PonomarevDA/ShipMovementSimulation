@@ -31,7 +31,7 @@ TON_TO_KILOGRAM = 1000;
 V = model.V * KNOT_TO_METER_PER_SEC;
 N = model.N * HORSEPOWER_TO_WATT;
 F = N / V;
-if model.W < 10000
+if model.W > 10000
     deltaF = F * 0.1;
 else
     deltaF = F * 0.2;
