@@ -465,23 +465,14 @@ if (updateAllErrorMarks(handles) == false) & (modelType ~= MODEL_TYPE_NO_MODEL)
     simulationType = get(handles.popupmenuSimulationType, "Value");
     integrationMethod = get(handles.popupmenuIntegrationMethod, "Value");
     
-    % 2. Choose solve method for system
-    switch modelType
-        case MODEL_TYPE_SURFACE_SHIP
-        	solveModel = @(x0, v0, p0, t_0, t_end, simulationType) solveSurfaceTransportModel(Model, ...
-                x0, v0, p0, t_0, t_end, simulationType, integrationMethod);
-        case MODEL_TYPE_SURFACE_BOAT
-        	solveModel = @(x0, v0, p0, t_0, t_end, simulationType) solveSurfaceTransportModel(Model, ...
-                x0, v0, p0, t_0, t_end, simulationType, integrationMethod);
-        case MODEL_TYPE_SUBMARINE_SHIP
-            solveModel = @(x0, v0, t_0, t_end, simulationType) solveSubmarineTransportModel(Model, ...
-                x0, v0, t_0, t_end, simulationType, integrationMethod);
-    end
+    % 2. Method setting
+    solve = @(x0, v0, p0, t_0, t_end, simulationType) solveModel(Model, ...
+              x0, v0, p0, t_0, t_end, simulationType, integrationMethod);
 
     % 3. Simulate system and calculate parameters
     % 3.1. Acceleration (any ship)
     if simulationType == SIMULATION_TYPE_ACCELERATION
-        [t, x, p, v] = solveModel(InitialValueX0, InitialValueV0, InitialRelativeThrust, t_0, t_end, SIMULATION_TYPE_ACCELERATION);
+        [t, x, p, v] = solve(InitialValueX0, InitialValueV0, InitialRelativeThrust, t_0, t_end, SIMULATION_TYPE_ACCELERATION);
         outputParameters = calculateAccelerationParameters(t, x, v);
         
         set(handles.editAccelerationMaximumSpeed, "String", outputParameters.MaxSpeed)
@@ -504,7 +495,7 @@ if (updateAllErrorMarks(handles) == false) & (modelType ~= MODEL_TYPE_NO_MODEL)
         set(handles.editTotalDistance, "String", "-")
     % 3.2. Braking
     elseif simulationType == SIMULATION_TYPE_BRAKING
-        [t, x, p, v] = solveModel(InitialValueX0, InitialValueV0, InitialRelativeThrust, t_0, t_end, SIMULATION_TYPE_BRAKING);
+        [t, x, p, v] = solve(InitialValueX0, InitialValueV0, InitialRelativeThrust, t_0, t_end, SIMULATION_TYPE_BRAKING);
         outputParameters = calculateBrakingParameters(t, x, v);
         
         set(handles.editAccelerationMaximumSpeed, "String", "-")
@@ -527,14 +518,14 @@ if (updateAllErrorMarks(handles) == false) & (modelType ~= MODEL_TYPE_NO_MODEL)
         set(handles.editTotalDistance, "String", "-")
     % 3.3. Both Acceleration + braking
     elseif simulationType == SIMULATION_TYPE_BOTH_ACCELERATION_AND_BRAKING
-        [t1, x1, p1, v1] = solveModel(InitialValueX0, InitialValueV0, InitialRelativeThrust, t_0, t_end, SIMULATION_TYPE_ACCELERATION);
+        [t1, x1, p1, v1] = solve(InitialValueX0, InitialValueV0, InitialRelativeThrust, t_0, t_end, SIMULATION_TYPE_ACCELERATION);
         accerationParameters = calculateAccelerationParameters(t1, x1, v1);
         t1 = t1(1 : accerationParameters.PointsAmount); 
         x1 = x1(1 : accerationParameters.PointsAmount);
         p1 = p1(1 : accerationParameters.PointsAmount); 
         v1 = v1(1 : accerationParameters.PointsAmount);
         
-        [t2, x2, p2, v2] = solveModel(x1(end), v1(end), 100, t1(end), t_end + 0.5, SIMULATION_TYPE_BRAKING); 
+        [t2, x2, p2, v2] = solve(x1(end), v1(end), 100, t1(end), t_end + 0.5, SIMULATION_TYPE_BRAKING); 
         brakingParameters = calculateBrakingParameters(t2, x2, v2);
         
         set(handles.editAccelerationMaximumSpeed, "String", accerationParameters.MaxSpeed)
@@ -556,7 +547,7 @@ if (updateAllErrorMarks(handles) == false) & (modelType ~= MODEL_TYPE_NO_MODEL)
         set(handles.editTotalTime, "String", accerationParameters.MaxSpeedTime + brakingParameters.Time)
         set(handles.editTotalDistance, "String", accerationParameters.Distance + brakingParameters.Distance)
     elseif (simulationType == SIMULATION_TYPE_CRUISE_CONTROL_PID) | (simulationType == SIMULATION_TYPE_CRUISE_CONTROL_SMART)
-    	[t, x, p, v] = solveModel(InitialValueX0, InitialValueV0, InitialRelativeThrust, t_0, t_end, simulationType);
+    	[t, x, p, v] = solve(InitialValueX0, InitialValueV0, InitialRelativeThrust, t_0, t_end, simulationType);
         set(handles.editAccelerationMaximumSpeed, "String", "-")
         set(handles.editAccelerationTime, "String", "-")
         set(handles.editAccelerationDistance, "String", "-")
