@@ -458,6 +458,9 @@ MODEL_TYPE_SURFACE_SHIP = 2;
 MODEL_TYPE_SURFACE_BOAT = 3;
 MODEL_TYPE_SUBMARINE_SHIP = 4;
 
+% Update cruise control speed speed
+sliderCruiseControl_Callback(handles.sliderCruiseControl, eventdata, handles);
+
 % Simulate system model if there are no error marks
 modelType = get(handles.popupmenuType, "Value");
 if (updateAllErrorMarks(handles) == false) & (modelType ~= MODEL_TYPE_NO_MODEL)
