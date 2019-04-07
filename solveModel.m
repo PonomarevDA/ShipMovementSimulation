@@ -86,7 +86,7 @@ if integrationMethod == INTEGRATION_METHOD_CONTINUOUS
         calculateF = @(t, s) s(3)*F/100;
         dx_dt = @(t, s) s(2);
         dv_dt = @(t, s) 1 / M * (calculateF(t, s) - A(s(2)) * s(2) * abs(s(2)));
-        needP = A(s(2)) * 100 / F * DesiredSpeed^2;
+        needP = A(DesiredSpeed) * 100 / F * DesiredSpeed^2;
         dp_dt = @(t, s) (needP > s(3)) * MaxChangeInRelativeThrustPerSecond + (needP < s(3)) * (-MaxChangeInRelativeThrustPerSecond);        
         continuousModel = @(t, s) [dx_dt(t, s); dv_dt(t, s); dp_dt(t, s)];
     end
@@ -125,7 +125,7 @@ elseif integrationMethod == INTEGRATION_METHOD_DIFFERENTIAL
         arrayTreshold = 2;
     elseif simulationType == SIMULATION_TYPE_CRUISE_CONTROL_SMART
         p = p0*ones(50, 1);
-        calculateNewP = @(oldP, newV, oldT) A(newV) / F * abs(DesiredSpeed) * (DesiredSpeed) * 100;
+        calculateNewP = @(oldP, newV, oldT) A(DesiredSpeed) / F * abs(DesiredSpeed) * (DesiredSpeed) * 100;
         arrayTreshold = 2;
     end
     % Solve system model
