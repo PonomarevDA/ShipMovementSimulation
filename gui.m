@@ -589,11 +589,11 @@ if (updateAllErrorMarks(handles) == false) & (modelType ~= MODEL_TYPE_NO_MODEL)
     ylabel('Distance x, meters')
     yyaxis right
     if (simulationType == SIMULATION_TYPE_ACCELERATION) | (simulationType == SIMULATION_TYPE_BRAKING) | ...
-       (simulationType == SIMULATION_TYPE_CRUISE_CONTROL_SMART)
+       (simulationType == SIMULATION_TYPE_CRUISE_CONTROL_SMART) | (simulationType == SIMULATION_TYPE_CRUISE_CONTROL_PID)
         plot(t, p, 'r', t, v, 'g')
-    elseif simulationType == SIMULATION_TYPE_CRUISE_CONTROL_PID
-        [T, P] = getPowerFromPid();
-        plot(T, P, 'r', t, v, 'g')
+    %elseif simulationType == SIMULATION_TYPE_CRUISE_CONTROL_PID
+    %    [T, P] = getPowerFromPid();
+    %    plot(T, P, 'r', t, v, 'g')
     elseif simulationType == SIMULATION_TYPE_BOTH_ACCELERATION_AND_BRAKING
         plot(t1, p1, 'r-', t1, v1, 'g', t2, p2, 'r', t2, v2, 'g')
     end
